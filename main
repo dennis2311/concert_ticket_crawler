@@ -1,0 +1,31 @@
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import time
+import re
+
+geckodriver = "C:/Users/denni/Desktop/concert_crawler/geckodriver-v0.26.0-win64"   # geckodriver는 환경에 따라 위치를 직접 지정해줄 것
+base_url = "http://ticket.interpark.com"
+
+def crawler(entertainer):
+    browser = webdriver.Firefox(geckodriver)
+    browser.get(base_url)   # 이 줄은 실제로 파이어폭스를 실행하며, url 주소로 이동한다.
+    browser.find_element_by_name('Nav_SearchWord').send_keys(entertainer)
+    browser.find_element_by_xpath('//*[@class="btn_search"]').click()
+    # xpath 를 찾는 방식은 (https://wkdtjsgur100.github.io/selenium-xpath/)과
+    # (https://beomi.github.io/gb-crawling/posts/2017-02-27-HowToMakeWebCrawler-With-Selenium.html) 를 참고할 것
+    browser.implicitly_wait(1)   # 원하는 데이터가 로드되기 전에 parsing 하는 경우가 있으므로 잠시 기다림 - browser 만 잠시 대기시킴
+    # time.sleep(1)   # 원하는 데이터가 로드되기 전에 parsing 하는 경우가 있으므로 잠시 기다림2 - 프로세스 자체를 지연시킴
+    html = browser.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    sale_line = soup.find('div',{'class':'tableTitle nowSale'})
+    count = re.findall('\d+',sale_line.text)
+    if len(count) == 0:
+        print("아직 판매중인 콘서트 티켓이 없습니다")
+    else:
+        print("현재 %s개의 콘서트가 있습니다"%(count[0]))
+
+def main():
+    entertainer = input()
+    crawler(entertainer)
+
+main()
